@@ -21,7 +21,6 @@ import (
 	. "github.com/ipfs/boxo/ipld/merkledag"
 	mdpb "github.com/ipfs/boxo/ipld/merkledag/pb"
 	dstest "github.com/ipfs/boxo/ipld/merkledag/test"
-	mockrouting "github.com/ipfs/boxo/routing/mock"
 	delay "github.com/ipfs/go-ipfs-delay"
 
 	bserv "github.com/ipfs/boxo/blockservice"
@@ -511,7 +510,7 @@ func TestCantGet(t *testing.T) {
 }
 
 func TestFetchGraph(t *testing.T) {
-	net := tn.VirtualNetwork(mockrouting.NewServer(), delay.Fixed(0))
+	net := tn.VirtualNetwork(delay.Fixed(0))
 	sg := testinstance.NewTestInstanceGenerator(net, nil, nil)
 	instances := sg.Instances(2)
 	dservs := [2]ipld.DAGService{
@@ -553,7 +552,7 @@ func TestFetchGraphWithDepthLimit(t *testing.T) {
 	}
 
 	testF := func(t *testing.T, tc testcase) {
-		net := tn.VirtualNetwork(mockrouting.NewServer(), delay.Fixed(0))
+		net := tn.VirtualNetwork(delay.Fixed(0))
 		sg := testinstance.NewTestInstanceGenerator(net, nil, nil)
 		instances := sg.Instances(2)
 		dservs := [2]ipld.DAGService{
