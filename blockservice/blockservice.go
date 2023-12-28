@@ -12,6 +12,7 @@ import (
 
 	"github.com/ipfs/boxo/blockstore"
 	"github.com/ipfs/boxo/exchange"
+	"github.com/ipfs/boxo/provider"
 	"github.com/ipfs/boxo/verifcid"
 	blocks "github.com/ipfs/go-block-format"
 	"github.com/ipfs/go-cid"
@@ -50,6 +51,7 @@ type BlockService struct {
 	blocker    Blocker
 	blockstore blockstore.Blockstore
 	exchange   exchange.Interface
+	provider   provider.Provider
 	// If checkFirst is true then first check that a block doesn't
 	// already exist to avoid republishing the block on the exchange.
 	checkFirst bool
@@ -76,6 +78,13 @@ func WithAllowlist(allowlist verifcid.Allowlist) Option {
 func WithContentBlocker(blocker Blocker) Option {
 	return func(bs *BlockService) {
 		bs.blocker = blocker
+	}
+}
+
+// WithProvider allows to advertise anything that is added through the blockservice.
+func WithProvider(prov provider.Provider) Option {
+	return func(bs *BlockService) {
+		bs.provider = prov
 	}
 }
 
@@ -153,6 +162,11 @@ func (s *BlockService) AddBlock(ctx context.Context, o blocks.Block) error {
 			logger.Errorf("NotifyNewBlocks: %s", err.Error())
 		}
 	}
+	if s.provider != nil {
+		if err := s.provider.Provide(o.Cid()); err != nil {
+			logger.Errorf("Provide: %s", err.Error())
+		}
+	}
 
 	return nil
 }
@@ -206,6 +220,14 @@ func (s *BlockService) AddBlocks(ctx context.Context, bs []blocks.Block) error {
 			logger.Errorf("NotifyNewBlocks: %s", err.Error())
 		}
 	}
+	if s.provider != nil {
+		for _, o := range toput {
+			if err := s.provider.Provide(o.Cid()); err != nil {
+				logger.Errorf("Provide: %s", err.Error())
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -267,6 +289,12 @@ func (s *BlockService) getBlock(ctx context.Context, c cid.Cid, fetchFactory fun
 	}
 	if s.exchange != nil {
 		err = s.exchange.NotifyNewBlocks(ctx, blk)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if s.provider != nil {
+		err = s.provider.Provide(blk.Cid())
 		if err != nil {
 			return nil, err
 		}
@@ -386,6 +414,14 @@ func (s *BlockService) getBlocks(ctx context.Context, ks []cid.Cid, fetchFactory
 					return
 				}
 				cache[0] = nil // early gc
+			}
+
+			if s.provider != nil {
+				err = s.provider.Provide(b.Cid())
+				if err != nil {
+					logger.Errorf("could not tell the provider about new blocks: %s", err)
+					return
+				}
 			}
 
 			select {
