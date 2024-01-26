@@ -20,10 +20,23 @@ The following emojis are used to highlight certain changes:
 - `blockservice.NewWritethrough` deprecated function has been removed, instead you can do `blockservice.New(..., ..., WriteThrough())` like previously.
 - `gateway`: a new header configuration middleware has been added to replace the existing header configuration, which can be used more generically.
 - `namesys` now has a `WithMaxCacheTTL` option, which allows you to define a maximum TTL that will be used for caching IPNS entries.
+- ✨ `routing/http`: delegated content and peer routing ([IPIP-378](https://github.com/ipfs/specs/pull/378)) has been implemented. This includes the following additions:
+  - `client`: now includes `Provide` and `ProvidePeer` methods, which can be used to provide signed records for content routing and peer routing.
+  - `types`: types related to the Announcement schema record have been added. A `types/iter.Filter` utility has also been added if you want to filter on top of an iterator.
 
 ### Changed
 
+- ✨🛠 `routing/http`: delegated content and peer routing ([IPIP-378](https://github.com/ipfs/specs/pull/378)) has been implemented. This includes the following changes:
+  - `client`: `WithProviderInfo` now accepts a third parameter, `protocols`, whose value is used when providing the peer.
+  - `contentrouter`: the `Client` interface has been updated to reflect the changes made to the client, that is, replacing the `ProvideBitswap` method by the generic `Provide` method.
+  - `server`: the `ContentRouter` interface now includes a `Provide` and a `ProvidePeer` functions.
+
 ### Removed
+
+- ✨🛠 `routing/http`: delegated content and peer routing ([IPIP-378](https://github.com/ipfs/specs/pull/378)) has been implemented. This includes the following removals:
+  - Deprecated Bitswap-schema related types and functions have been removed (e.g. `ProvideBitswap`, `BitswapRecord`, `SchemaBitswap`, `WriteProvidersRequest`, `WriteProvidersResponse`).
+  - `server`: `ContentRouter` no longer includes `ProvideBitswap`
+  - `contentrouter`: the content router adaptor no longer supports the previously deprecated Bitswap schema.
 
 ### Fixed
 
@@ -57,7 +70,7 @@ The following emojis are used to highlight certain changes:
 ### Fixed
 
 * `boxo/gateway`
-  * a panic (which is recovered) could sporadically be triggered inside a CAR request, if the right [conditions were met](https://github.com/ipfs/boxo/pull/511). 
+  * a panic (which is recovered) could sporadically be triggered inside a CAR request, if the right [conditions were met](https://github.com/ipfs/boxo/pull/511).
   * no longer emits `http: superfluous response.WriteHeader` warnings when an error happens.
 
 ## [v0.15.0]
@@ -161,7 +174,7 @@ The following emojis are used to highlight certain changes:
 
 * 🛠 The `routing/http` package experienced following removals:
   * Server and client no longer support the experimental `Provide` method.
-    `ProvideBitswap` is still usable, but marked as deprecated. A protocol-agnostic 
+    `ProvideBitswap` is still usable, but marked as deprecated. A protocol-agnostic
     provide mechanism is being worked on in [IPIP-378](https://github.com/ipfs/specs/pull/378).
   * Server no longer exports `FindProvidersPath` and `ProvidePath`.
 
